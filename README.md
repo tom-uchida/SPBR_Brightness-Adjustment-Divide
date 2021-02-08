@@ -1,0 +1,1 @@
+# SPBR_Brightness_Adjustment_Divide
