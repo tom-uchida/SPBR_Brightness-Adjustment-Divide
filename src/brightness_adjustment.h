@@ -17,8 +17,14 @@ public:
         PLY_BINARY4BA  = 3,
     };
 
+    enum ADJUSTMENT_TYPE
+    {
+        UNIFORM = 0,
+        DIVIDE  = 1
+    };
+
     // Constructor
-    BrightnessAdjustment( const FILE_FORMAT4BA file_format );
+    BrightnessAdjustment( const FILE_FORMAT4BA file_format, const ADJUSTMENT_TYPE adjustment_type );
 
     // Functions to control object and renderer
 public:
@@ -31,9 +37,9 @@ private:
     kvs::PointObject* CreateObjectCommon( int argc, char** argv, SPBR* spbr_engine );
     kvs::glsl::ParticleBasedRenderer* CreateRenderer( SPBR* spbr_engine, const size_t repeat_level );
 
-    // Functions to adjust brightness of an image
+    // Functions to support BA:uniform-version
 public:
-    void        AdjustBrightness( const std::string filename );
+    void        AdjustBrightnessUniformVersion( const std::string filename );
     // void        setBackgroundColor( const kvs::RGBColor bgcolor ) { m_bgcolor = bgcolor; };
 private:
     void        displayMessage() const;
@@ -44,16 +50,28 @@ private:
     float       calcTemporaryPercent( const kvs::ColorImage& color_image, const float p_current, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor );
     kvs::ColorImage deepCopyColorImage( const kvs::ColorImage& other ) const;
     float       specifyNumberOfDigits( const float p, const float digits ) const;
-    void        doBrightnessAdjustment( kvs::ColorImage& color_image, const float p ) const;
+    void        execBrightnessAdjustment( kvs::ColorImage& color_image, const float p ) const;
     float       calcFinalPercent( const kvs::ColorImage& color_image, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor ) const;
     void        writeAdjustedImage( const std::string filename , const kvs::ColorImage& color_image, const float p_final ) const;
     void        execOpenCommand( const std::string filename ) const;
     
     //---------- DATA ----------//
     const FILE_FORMAT4BA    m_file_format;
+    const ADJUSTMENT_TYPE   m_adjustment_type;
     const kvs::RGBColor     m_bgcolor;
     size_t                  m_snapshot_counter;
     kvs::ColorImage         m_color_image, m_color_image_LR1;
+
+
+    // Functions to support BA:divide-version
+public:
+    void        AdjustBrightnessDivideVersion( const std::string filename );
+
+private:
+    kvs::UInt8  discriminantAnalysis() const;
+
+    //---------- DATA ----------//
+    
 };
 
 #endif // end of brightness_adjustment.h

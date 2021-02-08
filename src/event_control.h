@@ -101,8 +101,8 @@ public:
             } else if ( m_ba->getSnapshotCounter() == 2 ) {
                 std::cout   << "*** SPBR ended successfully." << std::endl;
 
-                // Do "Brightness Adjustment"
-                m_ba->AdjustBrightness( m_filename );
+                // Exec. "Brightness Adjustment"
+                m_ba->AdjustBrightnessUniformVersion( m_filename );
             } // end if
 
         } else {

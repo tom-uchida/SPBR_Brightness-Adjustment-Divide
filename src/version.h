@@ -27,7 +27,8 @@ const char OPBR_WINDOW_TITLE   []   = "OPBR 2020 version 006h";
 
 // UCHIDA 2020/09/30
 //----- Brightness Adjustment
-const char BA_TITLE   [] = "========== Brightness Adjustment ==========";
+const char BA_UNIFORM_TITLE  [] = "========== Brightness Adjustment: Uniform version ==========";
+const char BA_DIVIDE_TITLE   [] = "========== Brightness Adjustment: Divide version ==========";
 //const char BA_DATE    [] = "2020/09/30";
 //const char BA_AUTHOR  [] = "Tomomasa Uchida";
 

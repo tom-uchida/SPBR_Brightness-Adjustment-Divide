@@ -36,9 +36,13 @@
 const float PERCENT_IN_REFERENCE_SECTION = 0.01f;
 const float PARAMETER_INTERVAL = 0.01f;
 
-BrightnessAdjustment::BrightnessAdjustment( FILE_FORMAT4BA file_format ):
+BrightnessAdjustment::BrightnessAdjustment( 
+    const FILE_FORMAT4BA file_format,
+    const ADJUSTMENT_TYPE adjustment_type
+):
     m_file_format( file_format ),
-    m_bgcolor( kvs::RGBColor( 0, 0, 0) ),
+    m_adjustment_type( adjustment_type ),
+    m_bgcolor( kvs::RGBColor( 0, 0, 0 ) ),
     m_snapshot_counter( 0 )
 {
     // Message
@@ -189,7 +193,7 @@ void BrightnessAdjustment::SnapshotImage( kvs::Scene* scene, const std::string f
     m_snapshot_counter++;
 } // End SnapshotImage()
 
-void BrightnessAdjustment::AdjustBrightness( const std::string filename )
+void BrightnessAdjustment::AdjustBrightnessUniformVersion( const std::string filename )
 {
     // Display opening message
     displayMessage();
@@ -251,19 +255,14 @@ void BrightnessAdjustment::AdjustBrightness( const std::string filename )
 inline void BrightnessAdjustment::displayMessage() const
 {
     std::cout << "\n\n";
-    std::cout << BA_TITLE << "\n";
+
+    if ( m_adjustment_type == UNIFORM ) 
+        std::cout << BA_UNIFORM_TITLE   << "\n";
+    else if ( m_adjustment_type == DIVIDE )
+        std::cout << BA_DIVIDE_TITLE    << "\n";
+
     std::cout << std::endl;
 } // End displayMessage()
-
-/***
-inline void BrightnessAdjustment::displayMessage() const
-{
-    std::cout << "\n\n";
-    std::cout << BA_TITLE << "\n";
-    std::cout << "                " << BA_DATE << "\n";
-    std::cout << "             " << BA_AUTHOR << "\n\n";
-} // End displayMessage()
-***/
 
 int BrightnessAdjustment::calcNumberOfPixelsNonBGColor( const kvs::ColorImage& color_image ) const
 {
@@ -378,7 +377,7 @@ inline float BrightnessAdjustment::specifyNumberOfDigits( const float p, const f
     return stof( p_str.substr( 0, digits ) );
 } // End specifyNumberOfDigits()
 
-void BrightnessAdjustment::doBrightnessAdjustment( kvs::ColorImage& color_image, const float p ) const
+void BrightnessAdjustment::execBrightnessAdjustment( kvs::ColorImage& color_image, const float p ) const
 {
     kvs::RGBColor pixel;
     kvs::UInt8    r, g, b;
@@ -402,7 +401,7 @@ void BrightnessAdjustment::doBrightnessAdjustment( kvs::ColorImage& color_image,
             color_image.setPixel( i, j, pixel );
         } // end for
     } // end for
-} // End doBrightnessAdjustment()
+} // End execBrightnessAdjustment()
 
 float BrightnessAdjustment::calcFinalPercent( const kvs::ColorImage& color_image, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor ) const
 {
@@ -442,3 +441,75 @@ inline void BrightnessAdjustment::execOpenCommand( const std::string filename ) 
     EXEC += filename;
     system( EXEC.c_str() );
 } // End execOpenCommand()
+
+void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string filename )
+{
+    // Display opening message
+    displayMessage();
+
+    // Calc number of pixels of the image
+    const size_t npixels             = m_color_image.numberOfPixels();
+    const size_t npixels_non_bgcolor = calcNumberOfPixelsNonBGColor( m_color_image );
+    std::cout   << "*** Number of pixels                  : " 
+                << npixels             << " (pixels)" << std::endl;
+    std::cout   << "*** Number of pixels non-BGColor      : " 
+                << npixels_non_bgcolor << " (pixels)" << std::endl;
+
+    // Convert color to gray
+    const kvs::GrayImage gray_image( m_color_image );
+    const kvs::GrayImage gray_image_LR1( m_color_image_LR1 );
+
+    const kvs::UInt8 th4divide = discriminantAnalysis( gray_image );
+    std::cout   << "*** Threshold to divide the image     : " 
+                << th4divide << " (pixel value)" << std::endl;
+
+    
+
+} // End AdjustBrightness4Divide()
+
+kvs::UInt8 BrightnessAdjustment::discriminantAnalysis( const kvs::GrayImage& gray_image ) const
+{
+    // Create histogram
+    std::vector<kvs::UInt8> hist( 256, 0 );
+    for ( size_t j = 0; j < gray_image.height(); j++ )
+        for ( size_t i = 0; i < gray_image.width(); i++ )
+            hist[ gray_image.pixel( i, j ) ]++;
+    // end for
+    
+    // Discriminant Analysis
+    kvs::UInt8 threshold = 0;
+    double max = 0.0;  // max value of {w1 * w2 * (m1 - m2)^2}
+    for ( size_t i = 0; i < 256; i++ ) {
+        int w1 = 0;  
+        int w2 = 0;
+        long sum1 = 0;
+        long sum2 = 0;
+        double m1 = 0.0;
+        double m2 = 0.0;
+        
+        for ( int j = 0; j <= i; j++ ) {
+            w1   += hist[j];
+            sum1 += j * hist[j];
+        }
+        
+        for ( int j = i + 1; j < 256; ++j ) {
+            w2   += hist[j];
+            sum2 += j * hist[j];
+        }
+        
+        if ( w1 )
+            m1 = (double)sum1 / w1;
+        
+        if ( w2 )
+            m2 = (double)sum2 / w2;
+        
+        const double tmp = ( (double)w1 * w2 * (m1 - m2) * (m1 - m2) );
+        
+        if ( tmp > max ) {
+            max = tmp;
+            threshold = i;
+        }
+    } // end for
+    
+    return threshold;
+} // End discriminantAnalysis()
