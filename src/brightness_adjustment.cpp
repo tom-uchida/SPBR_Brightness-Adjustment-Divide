@@ -36,6 +36,7 @@
 const float PERCENT_IN_REFERENCE_SECTION = 0.01f;
 const float PARAMETER_INTERVAL = 0.01f;
 
+// Constructor
 BrightnessAdjustment::BrightnessAdjustment( 
     const FILE_FORMAT4BA file_format,
     const ADJUSTMENT_TYPE adjustment_type
@@ -45,18 +46,26 @@ BrightnessAdjustment::BrightnessAdjustment(
     m_bgcolor( kvs::RGBColor( 0, 0, 0 ) ),
     m_snapshot_counter( 0 )
 {
-    // Message
     std::cout << "\n*** BrightnessAdjustment constructor is called.";
 
     // Display the file format of the input data
     if ( m_file_format == SPBR_ASCII4BA )
-        std::cout << " (FILE_FORMAT: SPBR_ASCII)"  << std::endl;
+        std::cout << " ( FILE_FORMAT: SPBR_ASCII";
     else if ( m_file_format == SPBR_BINARY4BA )
-        std::cout << " (FILE_FORMAT: SPBR_BINARY)" << std::endl;
+        std::cout << " ( FILE_FORMAT: SPBR_BINARY";
     else if ( m_file_format == PLY_ASCII4BA )
-        std::cout << " (FILE_FORMAT: PLY_ASCII)"   << std::endl;
+        std::cout << " ( FILE_FORMAT: PLY_ASCII";
     else if ( m_file_format == PLY_BINARY4BA )
-        std::cout << " (FILE_FORMAT: PLY_BINARY)"  << std::endl;
+        std::cout << " ( FILE_FORMAT: PLY_BINARY";
+    // end if
+
+    // Display the adjustment type
+    if ( m_adjustment_type == UNIFORM )
+        std::cout << ", ADJUSTMENT_TYPE: UNIFORM )" << std::endl;
+    else if ( m_adjustment_type == DIVIDE )
+        std::cout << ", ADJUSTMENT_TYPE: DIVIDE )" << std::endl;
+    // end if
+
 } // End constructor
 
 void BrightnessAdjustment::RegisterObject( kvs::Scene* scene, int argc, char** argv, SPBR* spbr_engine, const size_t repeat_level )
@@ -233,7 +242,7 @@ void BrightnessAdjustment::AdjustBrightnessUniformVersion( const std::string fil
     std::cout   << "\n*** Executing \"Brightness Adjustment\"..." << std::endl;
     float p = calcAdjustmentParameter( m_color_image, threshold_pixel_value_LR1, npixels_non_bgcolor );
     p = specifyNumberOfDigits( p, 4 );
-    doBrightnessAdjustment( m_color_image, p );
+    execBrightnessAdjustment( m_color_image, p );
 
     const clock_t end = clock();
     std::cout   << "*** Done! ( " 
@@ -342,7 +351,7 @@ float BrightnessAdjustment::calcAdjustmentParameter( const kvs::ColorImage& colo
 float BrightnessAdjustment::calcTemporaryPercent( const kvs::ColorImage& color_image, const float p_current, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor )
 {
     kvs::ColorImage color_image_tmp = deepCopyColorImage( color_image );
-    doBrightnessAdjustment( color_image_tmp, p_current );
+    execBrightnessAdjustment( color_image_tmp, p_current );
 
     // Convert color to gray
     const kvs::GrayImage gray_image_tmp( color_image_tmp );

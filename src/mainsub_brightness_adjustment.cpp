@@ -34,10 +34,14 @@ int mainsub_brightness_adjustment(
     char**                               argv,
     SPBR*                                spbr_engine,
     kvs::PointObject*                    object,
-    BrightnessAdjustment::FILE_FORMAT4BA file_format )
+    BrightnessAdjustment::FILE_FORMAT4BA file_format,
+    const int                            adjustment_type )
 {
     // Instantiate "BrightnessAdjustment" class
-    BrightnessAdjustment* ba = new BrightnessAdjustment( file_format );
+    BrightnessAdjustment* ba = new BrightnessAdjustment(
+        file_format,    /* const FILE_FORMAT4BA  */
+        adjustment_type /* const ADJUSTMENT_TYPE */
+    );
 
     // Create screen
     kvs::glut::Screen screen( app );
@@ -70,20 +74,21 @@ int mainsub_brightness_adjustment(
     InitializeEvent init;
     screen.addEvent( &init );
 
-    // Add keypress event
-    KeyPressEvent key;
-    screen.addEvent( &key );
+    // // Add keypress event
+    // KeyPressEvent key;
+    // screen.addEvent( &key );
 
     // Add timer event
     const int msec = 1000;
     TimerEvent timer_event(
-        /* const int             */  msec,
-        /* BrightnessAdjustment* */  ba, 
-        /* int                   */  argc, 
-        /* char**                */  argv, 
-        /* kvs::Scene*           */  screen.scene(), 
-        /* SPBR*                 */  spbr_engine, 
-        /* const int             */  original_repeat_level );
+        msec,                       /* const int             */
+        ba,                         /* BrightnessAdjustment* */  
+        argc,                       /* int                   */  
+        argv,                       /* char**                */  
+        screen.scene(),             /* kvs::Scene*           */  
+        spbr_engine,                /* SPBR*                 */  
+        original_repeat_level       /* const int             */  
+    );
     screen.addEvent( &timer_event );
 
     std::cout << "** Executing particle-based rendering...\n" << std::endl;

@@ -143,7 +143,9 @@ const char MOUSE_ROT_SPEED_COMMAND[] = "#/MouseRotSpeed";//
 const char MOUSE_ZOOM_SPEED_COMMAND[] = "#/MouseZoomSpeed";// ZOOMSPEED
 
 // UCHIDA 2020/09/29
-// #/BrightnessAdjustment 1 or 0 (default: 0)
+// UCHIDA 2021/02/09
+// #/BrightnessAdjustment ID (ID=0,1,2) (default: ID=0)
+//  ID = 0 (Off), 1 (Uniform version), 2 (Divide version)
 const char BRIGHTNESS_ADJUSTMENT[] = "#/BrightnessAdjustment"; 
 
 // #/LoopImageCreation end_angle num_images axis image_file_name_head

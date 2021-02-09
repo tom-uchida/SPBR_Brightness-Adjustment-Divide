@@ -30,6 +30,7 @@
 //#define DEBUG_MAIN
 
 // UCHIDA 2020/09/29
+// UCHIDA 2021/02/09
 // Prototype declaration
 int mainsub_brightness_adjustment(
     kvs::glut::Application*              app,
@@ -37,7 +38,9 @@ int mainsub_brightness_adjustment(
     char**                               argv,
     SPBR*                                spbr_engine,
     kvs::PointObject*                    object,
-    BrightnessAdjustment::FILE_FORMAT4BA file_format );
+    BrightnessAdjustment::FILE_FORMAT4BA file_format,
+    adjustment_type                      adjustment_type
+);
 
 //-----
 int mainsub_spbr_spbrbin ( int argc, char** argv )
@@ -88,16 +91,20 @@ int mainsub_spbr_spbrbin ( int argc, char** argv )
   //===== END OF CREATING THE POINT OBJECT =====//
 
     // UCHIDA 2020/09/29
-    // Adjust brightness
-    if ( spbr_engine->isBrightnessAdjustment() ) {
+    // UCHIDA 2021/02/09
+    // Brightness Adjustment
+    const int adjustment_type = spbr_engine->getBrightnessAdjustmentID();
+    if ( adjustment_type == 1 || adjustment_type == 2 ) {
         return mainsub_brightness_adjustment(
-                /* kvs::glut::Application*  */  &app, 
-                /* int                      */  argc, 
-                /* char**                   */  argv, 
-                /* SPBR*                    */  spbr_engine, 
-                /* kvs::PointObject*        */  object,
-                /* FILE_FORMAT4BA           */  BrightnessAdjustment::SPBR_BINARY4BA );
-    }
+            &app,           /* kvs::glut::Application*  */  
+            argc,           /* int                      */  
+            argv,           /* char**                   */  
+            spbr_engine,    /* SPBR*                    */  
+            object,         /* kvs::PointObject*        */  
+            BrightnessAdjustment::PLY_ASCII4BA, /* FILE_FORMAT4BA */
+            adjustment_type /* const int                */
+        );
+    } // end if
 
   kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();//KVS2
 

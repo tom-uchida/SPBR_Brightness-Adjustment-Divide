@@ -20,8 +20,8 @@ int  mainsub_spbr_spbrascii ( int argc, char** argv );
 //-----
 int main(int argc, char** argv) {
   // Opening Message and Usage
-  displayLoopImage_OpeningMessage();
-  displayLoopImage_Usage();
+  displaySPBR_OpeningMessage();
+  displaySPBR_Usage();
 
   // Help 
   if (argc >= 2 && !strcmp(argv[1], "-h")) {

@@ -42,8 +42,12 @@ class SPBR  : public kvs::PointObject {
 
   // UCHIDA 2020/09/29
   // Brightness Adjustment
-  void   setFlagBrightnessAdjustment( int flag );
-  bool   isBrightnessAdjustment ( void ) { return m_flagBrightnessAdjustment ;}
+//   void   setFlagBrightnessAdjustment( int flag );
+//   bool   isBrightnessAdjustment ( void ) { return m_flagBrightnessAdjustment; }
+
+    // UCHIDA 2021/02/09
+    void   setBrightnessAdjustmentID( int id );
+    bool   getBrightnessAdjustmentID( void ) { return m_brightness_adjustment_id; }
 
   // Camera control
   void   setCameraPosition ( double Ex , double Ey , double Ez  );
@@ -347,7 +351,8 @@ class SPBR  : public kvs::PointObject {
 
 //---- For Brightness Adjustment
 private:
-    bool m_flagBrightnessAdjustment; // UCHIDA 2020/10/03
+    // bool m_flagBrightnessAdjustment; // UCHIDA 2020/10/03
+    int m_brightness_adjustment_id; // UCHIDA 2021/02/09
 
 //---- For Loop Image Application //TANAKATANAKA
 private:

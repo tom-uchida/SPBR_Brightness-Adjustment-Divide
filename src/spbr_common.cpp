@@ -612,13 +612,31 @@ void SPBR::setMouseZoomSpeed ( double mouse_zoom_speed ) //ZOOMSPEED
 
 // UCHIDA 2020/09/29
 //-----
-void SPBR::setFlagBrightnessAdjustment( int flag ) {
-  if ( flag ) { 
-    m_flagBrightnessAdjustment = true;  
-    std::cout << "** Adjust brightness of the image." << std::endl;
+// void SPBR::setFlagBrightnessAdjustment( int flag ) {
+//   if ( flag ) { 
+//     m_flagBrightnessAdjustment = true;  
+//     std::cout << "** Adjust brightness of the image." << std::endl;
 
-  } else { 
-    m_flagBrightnessAdjustment = false;  
-    std::cout << "** Do not adjust brightness of the image." << std::endl;
-  }
+//   } else { 
+//     m_flagBrightnessAdjustment = false;  
+//     std::cout << "** Do not adjust brightness of the image." << std::endl;
+//   }
+// }
+
+// UCHIDA 2021/02/09
+//-----
+void SPBR::setFlagBrightnessAdjustment( int id )
+{
+    if ( id == 1 ) {
+        m_brightness_adjustment_id = 1;
+        std::cout << "** Brightness Adjustment: Unifrom Version is ON." << std::endl;
+
+    } else if ( id == 2 ) {
+        m_brightness_adjustment_id = 2;
+        std::cout << "** Brightness Adjustment: Divide Version is ON." << std::endl;
+    
+    } else if ( id == 0 ) {
+        m_brightness_adjustment_id = 0;
+        std::cout << "** Brightness Adjustment is OFF." << std::endl;
+    } // end if
 }

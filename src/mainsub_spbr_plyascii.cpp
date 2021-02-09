@@ -2,8 +2,6 @@
 ///// mainsub_spbr_plyascii.cpp /////
 /////////////////////////////////////
 
-#define LOOP_IMAGE //TANAKATANAKA
-
 #include <kvs/glut/Application>
 #include <kvs/Version> //KVS2
 
@@ -35,10 +33,6 @@
 #include "version.h"
 
 #include "mainfn_utility.h"
-
-#if defined LOOP_IMAGE
- #include "create_loop_image.h" //TANAKATANAKA
-#endif
 
 //#define DEBUG_MAIN
 
@@ -131,9 +125,6 @@ int mainsub_spbr_plyascii ( int argc, char** argv )
   if (spbr_engine->isLOD() ) {
     renderer->enableLODControl();
   }
-#if defined LOOP_IMAGE
-  renderer->disableLODControl(); //TANAKATANAKA
-#endif
 
   // Particle zoom control (ON/OFF)
   if ( spbr_engine->isParticleZoomOn() == false ) {
@@ -151,16 +142,7 @@ int mainsub_spbr_plyascii ( int argc, char** argv )
 
   // Create a screen and register 
   //  the point object and the renderer 
-#if defined LOOP_IMAGE
-  sc_loop_image screen(&app); //TANAKATANAKA 
-
-  screen.setEndRotAngle  ( spbr_engine->getEndRotAngle() );//TANAKATANAKA 
-  screen.setNumRotImages ( spbr_engine->getNumRotImages() );//TANAKATANAKA 
-  screen.setRotAxis      ( spbr_engine->getRotAxis());//TANAKATANAKA 
-  screen.setLoopImageNameHead ( spbr_engine->getLoopImageNameHead() );//TANAKATANAKA 
-#else
   kvs::glut::Screen screen( &app );
-#endif
   screen.registerObject( object, renderer );
 
   // Object rotation (Z==>X) if required
