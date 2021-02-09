@@ -80,7 +80,7 @@ SPBR::SPBR( const char* input_file, PLY_BINARY_FORMAT format_type)  :
     m_mouse_zoom_speed(1.0), //ZOOMSPEED
     m_num_output_ply_column(0),
     // m_flagBrightnessAdjustment(false) // UCHIDA 2020/10/03
-    m_brightnees_adjustment_id(0) // UCHIDA 2021/02/09
+    m_brightness_adjustment_id(0) // UCHIDA 2021/02/09
 {
   // Message
   std::cout <<"** SPBR constructor for PLY binary format is called." << std::endl;
@@ -589,11 +589,8 @@ SPBR::read_SPBR_ParameterFile_Binary( const char* filename )
         if ( !strncmp( buf, BRIGHTNESS_ADJUSTMENT, strlen(BRIGHTNESS_ADJUSTMENT) ) ) {
             unsigned int brightness_adjustment_id = 0;
             sscanf( buf, "%s %u", dummy, &brightness_adjustment_id );
-            m_brightness_adjustment_id = brightness_adjustment_id;
-            if ( m_brightness_adjustment_id > 2 || m_brightness_adjustment_id < 0 ) {
-                m_brightness_adjustment_id = 0;
-            }
-        else
+            setBrightnessAdjustmentID( brightness_adjustment_id );
+        } else
         
         //----- Loop Image -----// //TANAKATANAKA
         if ( !strncmp( buf, LOOP_IMAGE_CREATION_COMMAND, strlen(LOOP_IMAGE_CREATION_COMMAND ) ) ) {           double    end_rot_angle  ;

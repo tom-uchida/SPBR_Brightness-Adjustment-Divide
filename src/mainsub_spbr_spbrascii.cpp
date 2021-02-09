@@ -2,6 +2,8 @@
 ///// mainsub_spbr_spbrascii.cpp /////
 //////////////////////////////////////
 
+#define LOOP_IMAGE //TANAKATANAKA
+
 #include <kvs/glut/Application>
 #include <kvs/Version> //KVS2
 
@@ -27,17 +29,24 @@
 
 #include "mainfn_utility.h"
 
+#if defined LOOP_IMAGE
+ #include "create_loop_image.h" //TANAKATANAKA
+#endif
+
 //#define DEBUG_MAIN
 
 // UCHIDA 2020/09/29
+// UCHIDA 2021/02/09
 // Prototype declaration
 int mainsub_brightness_adjustment(
-    kvs::glut::Application*              app,
-    int                                  argc,
-    char**                               argv,
-    SPBR*                                spbr_engine,
-    kvs::PointObject*                    object,
-    BrightnessAdjustment::FILE_FORMAT4BA file_format );
+    kvs::glut::Application*                 app,
+    int                                     argc,
+    char**                                  argv,
+    SPBR*                                   spbr_engine,
+    kvs::PointObject*                       object,
+    BrightnessAdjustment::FILE_FORMAT4BA    file_format,
+    const int                               id
+);
 
 //-----
 int mainsub_spbr_spbrascii ( int argc, char** argv )
@@ -89,16 +98,20 @@ int mainsub_spbr_spbrascii ( int argc, char** argv )
   //===== END OF CREATING THE POINT OBJECT =====//
 
     // UCHIDA 2020/09/29
-    // Adjust brightness
-    if ( spbr_engine->isBrightnessAdjustment() ) {
+    // UCHIDA 2021/02/09
+    // Brightness Adjustment
+    const int id4ba = spbr_engine->getBrightnessAdjustmentID();
+    if ( id4ba == 1 || id4ba == 2 ) {
         return mainsub_brightness_adjustment(
-                /* kvs::glut::Application*  */  &app, 
-                /* int                      */  argc, 
-                /* char**                   */  argv, 
-                /* SPBR*                    */  spbr_engine, 
-                /* kvs::PointObject*        */  object,
-                /* FILE_FORMAT4BA           */  BrightnessAdjustment::SPBR_ASCII4BA );
-    }
+            &app,           /* kvs::glut::Application*  */  
+            argc,           /* int                      */  
+            argv,           /* char**                   */  
+            spbr_engine,    /* SPBR*                    */  
+            object,         /* kvs::PointObject*        */  
+            BrightnessAdjustment::SPBR_ASCII4BA, /* FILE_FORMAT4BA   */
+            id4ba           /* const int                */
+        );
+    } // end if
 
   kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();//KVS2
 
@@ -118,6 +131,9 @@ int mainsub_spbr_spbrascii ( int argc, char** argv )
   if (spbr_engine->isLOD() ) {
     renderer->enableLODControl();
   }
+#if defined LOOP_IMAGE
+  renderer->disableLODControl(); //TANAKATANAKA
+#endif
 
   // Particle zoom control (ON/OFF)
   if ( spbr_engine->isParticleZoomOn() == false ) {
@@ -135,7 +151,17 @@ int mainsub_spbr_spbrascii ( int argc, char** argv )
 
   // Create a screen and register 
   //  the point object and the renderer 
+#if defined LOOP_IMAGE
+  sc_loop_image screen(&app); //TANAKATANAKA 
+
+  screen.setEndRotAngle  ( spbr_engine->getEndRotAngle() );//TANAKATANAKA 
+  screen.setNumRotImages ( spbr_engine->getNumRotImages() );//TANAKATANAKA 
+  screen.setRotAxis      ( spbr_engine->getRotAxis());//TANAKATANAKA 
+  screen.setLoopImageNameHead ( spbr_engine->getLoopImageNameHead() );//TANAKATANAKA 
+
+#else
   kvs::glut::Screen screen( &app );
+#endif
   screen.registerObject( object, renderer );
 
   // Object rotation (Z==>X) if required

@@ -36,14 +36,17 @@
 //#define DEBUG_MAIN
 
 // UCHIDA 2020/09/29
+// UCHIDA 2021/02/09
 // Prototype declaration
 int mainsub_brightness_adjustment(
-    kvs::glut::Application*              app,
-    int                                  argc,
-    char**                               argv,
-    SPBR*                                spbr_engine,
-    kvs::PointObject*                    object,
-    BrightnessAdjustment::FILE_FORMAT4BA file_format );
+    kvs::glut::Application*                 app,
+    int                                     argc,
+    char**                                  argv,
+    SPBR*                                   spbr_engine,
+    kvs::PointObject*                       object,
+    BrightnessAdjustment::FILE_FORMAT4BA    file_format,
+    const int                               id
+);
 
 //-----
 int mainsub_spbr_plybin ( int argc, char** argv )
@@ -97,16 +100,20 @@ int mainsub_spbr_plybin ( int argc, char** argv )
   //===== END OF CREATING THE POINT OBJECT =====//
 
     // UCHIDA 2020/09/29
-    // Adjust brightness
-    if ( spbr_engine->isBrightnessAdjustment() ) {
+    // UCHIDA 2021/02/09
+    // Brightness Adjustment
+    const int id4ba = spbr_engine->getBrightnessAdjustmentID();
+    if ( id4ba == 1 || id4ba == 2 ) {
         return mainsub_brightness_adjustment(
-                /* kvs::glut::Application*  */  &app, 
-                /* int                      */  argc, 
-                /* char**                   */  argv, 
-                /* SPBR*                    */  spbr_engine, 
-                /* kvs::PointObject*        */  object,
-                /* FILE_FORMAT4BA           */  BrightnessAdjustment::PLY_BINARY4BA );
-    }
+            &app,           /* kvs::glut::Application*  */  
+            argc,           /* int                      */  
+            argv,           /* char**                   */  
+            spbr_engine,    /* SPBR*                    */  
+            object,         /* kvs::PointObject*        */  
+            BrightnessAdjustment::PLY_BINARY4BA, /* FILE_FORMAT4BA   */
+            id4ba           /* const int                */
+        );
+    } // end if
 
   kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();//KVS2
 

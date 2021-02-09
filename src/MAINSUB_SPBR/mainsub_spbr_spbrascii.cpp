@@ -33,13 +33,13 @@
 // UCHIDA 2021/02/09
 // Prototype declaration
 int mainsub_brightness_adjustment(
-    kvs::glut::Application*              app,
-    int                                  argc,
-    char**                               argv,
-    SPBR*                                spbr_engine,
-    kvs::PointObject*                    object,
-    BrightnessAdjustment::FILE_FORMAT4BA file_format,
-    adjustment_type                      adjustment_type
+    kvs::glut::Application*                 app,
+    int                                     argc,
+    char**                                  argv,
+    SPBR*                                   spbr_engine,
+    kvs::PointObject*                       object,
+    BrightnessAdjustment::FILE_FORMAT4BA    file_format,
+    const int                               id
 );
 
 //-----
@@ -94,16 +94,16 @@ int mainsub_spbr_spbrascii ( int argc, char** argv )
     // UCHIDA 2020/09/29
     // UCHIDA 2021/02/09
     // Brightness Adjustment
-    const int adjustment_type = spbr_engine->getBrightnessAdjustmentID();
-    if ( adjustment_type == 1 || adjustment_type == 2 ) {
+    const int id4ba = spbr_engine->getBrightnessAdjustmentID();
+    if ( id4ba == 1 || id4ba == 2 ) {
         return mainsub_brightness_adjustment(
             &app,           /* kvs::glut::Application*  */  
             argc,           /* int                      */  
             argv,           /* char**                   */  
             spbr_engine,    /* SPBR*                    */  
             object,         /* kvs::PointObject*        */  
-            BrightnessAdjustment::PLY_ASCII4BA, /* FILE_FORMAT4BA */
-            adjustment_type /* const int                */
+            BrightnessAdjustment::SPBR_ASCII4BA, /* FILE_FORMAT4BA   */
+            id4ba           /* const int                */
         );
     } // end if
 

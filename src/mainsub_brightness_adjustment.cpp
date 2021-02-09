@@ -29,18 +29,18 @@
 #include <kvs/glut/Timer>
 
 int mainsub_brightness_adjustment(
-    kvs::glut::Application*              app,
-    int                                  argc,
-    char**                               argv,
-    SPBR*                                spbr_engine,
-    kvs::PointObject*                    object,
-    BrightnessAdjustment::FILE_FORMAT4BA file_format,
-    const int                            adjustment_type )
+    kvs::glut::Application*                 app,
+    int                                     argc,
+    char**                                  argv,
+    SPBR*                                   spbr_engine,
+    kvs::PointObject*                       object,
+    BrightnessAdjustment::FILE_FORMAT4BA    file_format,
+    const int                               id )
 {
     // Instantiate "BrightnessAdjustment" class
     BrightnessAdjustment* ba = new BrightnessAdjustment(
-        file_format,    /* const FILE_FORMAT4BA  */
-        adjustment_type /* const ADJUSTMENT_TYPE */
+        file_format,    /* const FILE_FORMAT4BA */
+        id              /* const int            */
     );
 
     // Create screen

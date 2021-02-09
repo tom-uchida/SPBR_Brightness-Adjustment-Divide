@@ -25,7 +25,7 @@ public:
     };
 
     // Constructor
-    BrightnessAdjustment( const FILE_FORMAT4BA file_format, const ADJUSTMENT_TYPE adjustment_type );
+    BrightnessAdjustment( const FILE_FORMAT4BA file_format, const int id );
 
     // Functions to control object and renderer
 public:
@@ -48,7 +48,7 @@ private:
 
 //---------- DATA ----------//
     const FILE_FORMAT4BA    m_file_format;
-    const ADJUSTMENT_TYPE   m_adjustment_type;
+    ADJUSTMENT_TYPE         m_adjustment_type;
     const kvs::RGBColor     m_bgcolor;
     size_t                  m_snapshot_counter;
     kvs::ColorImage         m_color_image_LR1;

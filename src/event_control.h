@@ -102,9 +102,9 @@ public:
                 std::cout   << "*** SPBR ended successfully." << std::endl;
 
                 // Exec. "Brightness Adjustment"
-                if ( m_ba->getAdjustmentType == BrightnessAdjustment::UNIFORM )
+                if ( m_ba->getAdjustmentType() == BrightnessAdjustment::UNIFORM )
                     m_ba->AdjustBrightnessUniformVersion( m_filename );
-                else if ( m_ba->getAdjustmentType == BrightnessAdjustment::DIVIDE )
+                else if ( m_ba->getAdjustmentType() == BrightnessAdjustment::DIVIDE )
                     m_ba->AdjustBrightnessDivideVersion( m_filename );
                 // end if
             

@@ -625,11 +625,11 @@ void SPBR::setMouseZoomSpeed ( double mouse_zoom_speed ) //ZOOMSPEED
 
 // UCHIDA 2021/02/09
 //-----
-void SPBR::setFlagBrightnessAdjustment( int id )
+void SPBR::setBrightnessAdjustmentID( const int id )
 {
     if ( id == 1 ) {
         m_brightness_adjustment_id = 1;
-        std::cout << "** Brightness Adjustment: Unifrom Version is ON." << std::endl;
+        std::cout << "** Brightness Adjustment: Uniform Version is ON." << std::endl;
 
     } else if ( id == 2 ) {
         m_brightness_adjustment_id = 2;

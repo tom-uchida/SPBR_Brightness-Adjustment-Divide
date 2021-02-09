@@ -17,6 +17,7 @@ src/opbr
 src/spbr
 src/spbr_ba
 src/sopbr
+src/spbr_loop_image
 src/*.spbr
 src/*.org
 src/*.0

@@ -39,32 +39,35 @@ const float PARAMETER_INTERVAL = 0.01f;
 // Constructor
 BrightnessAdjustment::BrightnessAdjustment( 
     const FILE_FORMAT4BA file_format,
-    const ADJUSTMENT_TYPE adjustment_type
+    const int id
 ):
     m_file_format( file_format ),
-    m_adjustment_type( adjustment_type ),
+    m_adjustment_type( OFF ),
     m_bgcolor( kvs::RGBColor( 0, 0, 0 ) ),
     m_snapshot_counter( 0 )
 {
-    std::cout << "\n*** BrightnessAdjustment constructor is called.";
+    std::cout << "\n*** BrightnessAdjustment constructor is called:\n";
 
     // Display the file format of the input data
-    if ( m_file_format == SPBR_ASCII4BA )
-        std::cout << " ( FILE_FORMAT: SPBR_ASCII";
-    else if ( m_file_format == SPBR_BINARY4BA )
-        std::cout << " ( FILE_FORMAT: SPBR_BINARY";
-    else if ( m_file_format == PLY_ASCII4BA )
-        std::cout << " ( FILE_FORMAT: PLY_ASCII";
+    if ( m_file_format == PLY_ASCII4BA )
+        std::cout << "      FILE_FORMAT: PLY_ASCII\n";
     else if ( m_file_format == PLY_BINARY4BA )
-        std::cout << " ( FILE_FORMAT: PLY_BINARY";
+        std::cout << "      FILE_FORMAT: PLY_BINARY\n";
+    else if ( m_file_format == SPBR_ASCII4BA )
+        std::cout << "      FILE_FORMAT: SPBR_ASCII\n"; 
+    else if ( m_file_format == SPBR_BINARY4BA )
+        std::cout << "      FILE_FORMAT: SPBR_BINARY\n";
     // end if
 
-    // Display the adjustment type
-    if ( m_adjustment_type == UNIFORM )
-        std::cout << ", ADJUSTMENT_TYPE: UNIFORM )" << std::endl;
-    else if ( m_adjustment_type == DIVIDE )
-        std::cout << ", ADJUSTMENT_TYPE: DIVIDE )" << std::endl;
-    // end if
+    // Set the adjustment type
+    if ( id == 1 ) {
+        m_adjustment_type = UNIFORM;
+        std::cout << "      ADJUSTMENT_TYPE: UNIFORM\n";
+    
+    } else if ( id == 2 ) {
+        m_adjustment_type = DIVIDE;
+        std::cout << "      ADJUSTMENT_TYPE: DIVIDE\n";
+    } // end if
 
 } // End constructor
 
@@ -470,7 +473,7 @@ void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string file
 
     const kvs::UInt8 th4divide = discriminantAnalysis( gray_image );
     std::cout   << "*** Threshold to divide the image     : " 
-                << th4divide << " (pixel value)" << std::endl;
+                << +th4divide << " (pixel value)" << std::endl;
 
     
 
