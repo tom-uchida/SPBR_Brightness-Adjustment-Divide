@@ -471,11 +471,41 @@ void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string file
     const kvs::GrayImage gray_image( m_color_image );
     const kvs::GrayImage gray_image_LR1( m_color_image_LR1 );
 
-    const kvs::UInt8 th4divide = discriminantAnalysis( gray_image );
+    // =====================================================
+    //  STEP1: Calculate threshold pixel value for division
+    // =====================================================
+    const kvs::UInt8 th4division = discriminantAnalysis( gray_image );
     std::cout   << "*** Threshold to divide the image     : " 
-                << +th4divide << " (pixel value)" << std::endl;
+                << +th4division << " (pixel value)" << std::endl;
 
+    // ===================================================
+    //  STEP2: Divide into high and low pixel value image
+    // ===================================================
+    // Initialize
+    m_color_image_high = deepCopyColorImage( m_color_image );
+    m_color_image_low  = deepCopyColorImage( m_color_image );
+
+    // Divide into high and low pixel value image
+    divideIntoTwoImages( gray_image, th4divide );
     
+    // Save two images
+    // m_color_image_high.write( filename + "_high.bmp" );
+    // m_color_image_low.write( filename + "_low.bmp" );
+
+    // ========================================================
+    //  STEP3: Adjust brightness of the high-pixel-value image
+    // ========================================================
+    const clock_t start = clock();
+    const kvs::UInt8 max_pixel_value     = calcMaxPixelValue( gray_image );
+    const kvs::UInt8 max_pixel_value_LR1 = calcMaxPixelValue( gray_image_LR1 );
+    std::cout   << "*** Max pixel value                   : " 
+                << +max_pixel_value << " (pixel value)"     << std::endl;
+    std::cout   << "*** Max pixel value (LR=1)            : " 
+                << +max_pixel_value_LR1 << " (pixel value)" << std::endl;
+
+    // =======================================================
+    //  STEP4: Adjust brightness of the low-pixel-value image
+    // =======================================================
 
 } // End AdjustBrightness4Divide()
 
@@ -499,24 +529,20 @@ kvs::UInt8 BrightnessAdjustment::discriminantAnalysis( const kvs::GrayImage& gra
         double m1 = 0.0;
         double m2 = 0.0;
         
-        for ( int j = 0; j <= i; j++ ) {
+        for ( int j = 0; j < i; j++ ) {
             w1   += hist[j];
             sum1 += j * hist[j];
         }
         
-        for ( int j = i + 1; j < 256; ++j ) {
+        for ( int j = i + 1; j < 256; j++ ) {
             w2   += hist[j];
             sum2 += j * hist[j];
         }
         
-        if ( w1 )
-            m1 = (double)sum1 / w1;
-        
-        if ( w2 )
-            m2 = (double)sum2 / w2;
+        if ( w1 ) m1 = (double)sum1 / w1;
+        if ( w2 ) m2 = (double)sum2 / w2;
         
         const double tmp = ( (double)w1 * w2 * (m1 - m2) * (m1 - m2) );
-        
         if ( tmp > max ) {
             max = tmp;
             threshold = i;
@@ -525,3 +551,19 @@ kvs::UInt8 BrightnessAdjustment::discriminantAnalysis( const kvs::GrayImage& gra
     
     return threshold;
 } // End discriminantAnalysis()
+
+void BrightnessAdjustment::divideIntoTwoImages( const kvs::GrayImage& gray_image, const kvs::UInt8 threshold ) {
+    const kvs::RGBColor BGColor( 0, 0, 0 );
+
+    for ( size_t j = 0; j < gray_image.height(); j++ ) {
+        for ( size_t i = 0; i < gray_image.width(); i++ ) {
+            // Divide
+            if ( gray_image.pixel( i, j ) > threshold )
+                m_color_image_low.setPixel( i, j, BGColor );
+            else
+                m_color_image_high.setPixel( i, j, BGColor );
+            // end if
+        } // end for i
+    } // end for j
+
+} // End divideIntoTwoImages()

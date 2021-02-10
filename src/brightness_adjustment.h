@@ -80,6 +80,7 @@ public:
 
 private:
     kvs::UInt8  discriminantAnalysis( const kvs::GrayImage& gray_image ) const;
+    void        divideIntoTwoImages( const kvs::GrayImage& gray_image, const kvs::UInt8 threshold );
 
     //---------- DATA ----------//
     kvs::ColorImage         m_color_image_high, m_color_image_low;
