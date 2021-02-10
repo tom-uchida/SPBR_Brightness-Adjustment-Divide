@@ -269,11 +269,11 @@ inline void BrightnessAdjustment::displayMessage() const
     std::cout << "\n\n";
 
     if ( m_adjustment_type == UNIFORM ) 
-        std::cout << BA_UNIFORM_TITLE   << "\n";
+        std::cout << BA_UNIFORM_TITLE << std::endl;
     else if ( m_adjustment_type == DIVIDE )
-        std::cout << BA_DIVIDE_TITLE    << "\n";
+        std::cout << BA_DIVIDE_TITLE  << std::endl;
 
-    std::cout << std::endl;
+    std::cout << "\n";
 } // End displayMessage()
 
 int BrightnessAdjustment::calcNumberOfPixelsNonBGColor( const kvs::ColorImage& color_image ) const
@@ -486,16 +486,17 @@ void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string file
     m_color_image_low  = deepCopyColorImage( m_color_image );
 
     // Divide into high and low pixel value image
-    divideIntoTwoImages( gray_image, th4divide );
+    divideIntoTwoImages( gray_image, th4division );
     
     // Save two images
-    // m_color_image_high.write( filename + "_high.bmp" );
-    // m_color_image_low.write( filename + "_low.bmp" );
+    m_color_image_high.write( filename + "_high_before.bmp" );
+    m_color_image_low.write( filename + "_low_before.bmp" );
 
+    const clock_t start = clock();
+    std::cout   << "\n*** Executing \"Brightness Adjustment\"..." << std::endl;
     // ========================================================
     //  STEP3: Adjust brightness of the high-pixel-value image
     // ========================================================
-    const clock_t start = clock();
     const kvs::UInt8 max_pixel_value     = calcMaxPixelValue( gray_image );
     const kvs::UInt8 max_pixel_value_LR1 = calcMaxPixelValue( gray_image_LR1 );
     std::cout   << "*** Max pixel value                   : " 
@@ -503,9 +504,42 @@ void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string file
     std::cout   << "*** Max pixel value (LR=1)            : " 
                 << +max_pixel_value_LR1 << " (pixel value)" << std::endl;
 
+    const size_t npixels_non_bgcolor_LR1 = calcNumberOfPixelsNonBGColor( m_color_image_LR1 );
+    const kvs::UInt8 threshold_pixel_value_LR1_high = searchThresholdPixelValue( gray_image_LR1, npixels_non_bgcolor_LR1, max_pixel_value_LR1 );
+
+    float p_high = calcAdjustmentParameter( m_color_image_high, threshold_pixel_value_LR1_high, npixels_non_bgcolor );
+    p_high = specifyNumberOfDigits( p_high, 4 );
+    execBrightnessAdjustment( m_color_image_high, p_high );
+
+    m_color_image_high.write( filename + "_high_after.bmp" );
+
     // =======================================================
     //  STEP4: Adjust brightness of the low-pixel-value image
     // =======================================================
+    const kvs::UInt8 target_pixel_value = calcMeanPixelValue( m_color_image_high );
+    const kvs::UInt8 threshold_pixel_value_LR1_low = searchThresholdPixelValue( gray_image_LR1, npixels_non_bgcolor_LR1, target_pixel_value );
+
+    float p_low = calcAdjustmentParameter( m_color_image_low, threshold_pixel_value_LR1_low, npixels_non_bgcolor );
+    p_low = specifyNumberOfDigits( p_low, 4 );
+    execBrightnessAdjustment( m_color_image_low, p_low );
+
+    m_color_image_low.write( filename + "_low_after.bmp" );
+
+    // =============================================================
+    //  STEP5: Combine the adjusted high and low pixel value images
+    // =============================================================
+    combineTwoImages( m_color_image_high, m_color_image_low );
+
+
+    const clock_t end = clock();
+    std::cout   << "*** Done! ( " 
+                << static_cast<double>( end - start ) / CLOCKS_PER_SEC << " [sec] )\n" << std::endl;
+
+    std::cout   << "*** Adjustment parameter              : "
+                << "p_high: " << std::setprecision(3) << p_high << ", "
+                << "p_low: "  << std::setprecision(3) << p_low  << std::endl;
+
+    m_color_image.write( filename + "_final.bmp" );
 
 } // End AdjustBrightness4Divide()
 
@@ -567,3 +601,36 @@ void BrightnessAdjustment::divideIntoTwoImages( const kvs::GrayImage& gray_image
     } // end for j
 
 } // End divideIntoTwoImages()
+
+kvs::UInt8 BrightnessAdjustment::calcMeanPixelValue( const kvs::ColorImage& color_image ) const
+{
+    // Convert color to gray
+    const kvs::GrayImage gray_image( color_image );
+    
+    int sum_pixel_value = 0;
+    int npixels_non_bgcolor = 0;
+    for ( size_t j = 0; j < gray_image.height(); j++ ) {
+        for ( size_t i = 0; i < gray_image.width(); i++ ) {
+            if ( gray_image.pixel( i, j ) != 0 ) {
+                sum_pixel_value += (int)gray_image.pixel( i, j );
+                npixels_non_bgcolor++;
+            }
+        }
+    }
+    
+    const kvs::UInt8 mean_pixel_value = sum_pixel_value / npixels_non_bgcolor;
+    return mean_pixel_value;
+} // End calcMeanPixelValue()
+
+void BrightnessAdjustment::combineTwoImages( const kvs::ColorImage& color_image_high, const kvs::ColorImage& color_image_low )
+{
+    for ( size_t j = 0; j < color_image_high.height(); j++ ) {
+        for ( size_t i = 0; i < color_image_high.width(); i++ ) {
+            if ( color_image_high.pixel( i, j ) == m_bgcolor ) {
+            } else { m_color_image.setPixel( i, j, color_image_high.pixel( i, j ) ); }
+
+            if ( color_image_low.pixel( i, j ) == m_bgcolor ) {
+            } else { m_color_image.setPixel( i, j, color_image_low.pixel( i, j ) ); }
+        }
+    }
+} // End combineTwoImages()

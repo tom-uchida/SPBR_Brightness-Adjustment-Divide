@@ -39,18 +39,19 @@ private:
     kvs::glsl::ParticleBasedRenderer* CreateRenderer( SPBR* spbr_engine, const size_t repeat_level );
 
 
-// Common functions
+    // Common functions
 public:
     int         getAdjustmentType() const { return m_adjustment_type; };
 
 private:
     void        displayMessage() const;
 
-//---------- DATA ----------//
+    //---------- DATA ----------//
     const FILE_FORMAT4BA    m_file_format;
     ADJUSTMENT_TYPE         m_adjustment_type;
     const kvs::RGBColor     m_bgcolor;
     size_t                  m_snapshot_counter;
+    kvs::ColorImage         m_color_image;
     kvs::ColorImage         m_color_image_LR1;
 
     // Functions to support BA: Uniform Version
@@ -69,9 +70,6 @@ private:
     float       calcFinalPercent( const kvs::ColorImage& color_image, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor ) const;
     void        writeAdjustedImage( const std::string filename , const kvs::ColorImage& color_image, const float p_final ) const;
     void        execOpenCommand( const std::string filename ) const;
-    
-    //---------- DATA ----------//
-    kvs::ColorImage         m_color_image;
 
 
     // Functions to support BA: Divide Version
@@ -81,9 +79,12 @@ public:
 private:
     kvs::UInt8  discriminantAnalysis( const kvs::GrayImage& gray_image ) const;
     void        divideIntoTwoImages( const kvs::GrayImage& gray_image, const kvs::UInt8 threshold );
+    kvs::UInt8  calcMeanPixelValue( const kvs::ColorImage& color_image ) const;
+    void        combineTwoImages( const kvs::ColorImage& color_image_high, const kvs::ColorImage& color_image_low );
 
     //---------- DATA ----------//
-    kvs::ColorImage         m_color_image_high, m_color_image_low;
+    kvs::ColorImage         m_color_image_high;
+    kvs::ColorImage         m_color_image_low;
 };
 
 #endif // end of brightness_adjustment.h
