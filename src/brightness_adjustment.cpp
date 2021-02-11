@@ -33,7 +33,11 @@
 
 #include <time.h>
 
-const float PERCENT_IN_REFERENCE_SECTION = 0.01f;
+// #define DEVELOPPING
+
+const float PERCENT_IN_REFERENCE_SECTION            = 0.01f;
+const float PERCENT_IN_REFERENCE_SECTION_FOR_HIGH   = 0.01f;
+const float PERCENT_IN_REFERENCE_SECTION_FOR_LOW    = 0.01f;
 const float PARAMETER_INTERVAL = 0.01f;
 
 // Constructor
@@ -237,16 +241,29 @@ void BrightnessAdjustment::AdjustBrightnessUniformVersion( const std::string fil
     //  STEP2: Search for threshold pixel value (LR=1) 
     // ================================================
     const size_t npixels_non_bgcolor_LR1 = calcNumberOfPixelsNonBGColor( m_color_image_LR1 );
-    const kvs::UInt8 threshold_pixel_value_LR1 = searchThresholdPixelValue( gray_image_LR1, npixels_non_bgcolor_LR1, max_pixel_value_LR1 );
+    const kvs::UInt8 threshold_pixel_value_LR1 = searchThresholdPixelValue4LR1( 
+        gray_image_LR1, 
+        npixels_non_bgcolor_LR1, 
+        max_pixel_value_LR1,
+        PERCENT_IN_REFERENCE_SECTION
+    );
 
     // =======================================
     //  STEP3: Adjust brightness of the image
     // =======================================
     std::cout   << "\n*** Executing \"Brightness Adjustment\"..." << std::endl;
-    float p = calcAdjustmentParameter( m_color_image, threshold_pixel_value_LR1, npixels_non_bgcolor );
+    float p = calcAdjustmentParameter( 
+        m_color_image, 
+        threshold_pixel_value_LR1, 
+        npixels_non_bgcolor,
+        PERCENT_IN_REFERENCE_SECTION
+    );
     p = specifyNumberOfDigits( p, 4 );
     execBrightnessAdjustment( m_color_image, p );
 
+    // =====
+    //  END
+    // =====
     const clock_t end = clock();
     std::cout   << "*** Done! ( " 
                 << static_cast<double>( end - start ) / CLOCKS_PER_SEC << " [sec] )\n" << std::endl;
@@ -260,7 +277,7 @@ void BrightnessAdjustment::AdjustBrightnessUniformVersion( const std::string fil
                 << +threshold_pixel_value_LR1 << " ~ " << +max_pixel_value_LR1 << " (pixel value) )" << std::endl;
 
     // Write adjusted image
-    writeAdjustedImage( filename, m_color_image, p );
+    writeAdjustedImage( filename, p );
 
 } // End AdjustBrightness()
 
@@ -302,49 +319,54 @@ kvs::UInt8 BrightnessAdjustment::calcMaxPixelValue( const kvs::GrayImage& gray_i
     return max_pixel_value;
 } // End calcMaxPixelValue()
 
-kvs::UInt8 BrightnessAdjustment::searchThresholdPixelValue( const kvs::GrayImage& gray_image, const size_t npixels_non_bgcolor_LR1, const kvs::UInt8 max_pixel_value_LR1 ) const
+kvs::UInt8 BrightnessAdjustment::searchThresholdPixelValue4LR1( const kvs::GrayImage& gray_image, const size_t npixels_non_bgcolor_LR1, const kvs::UInt8 right_edge_pixel_value, const float percent_in_ref_sec ) const
 {
-    kvs::UInt8 threshold_pixel_value_LR1 = max_pixel_value_LR1;
+    kvs::UInt8 left_edge_pixel_value = right_edge_pixel_value;
     float percent_tmp = 0.0f;
 
     // Search for threshold pixel value
-    while ( percent_tmp < PERCENT_IN_REFERENCE_SECTION ) {
-        int counter = 0;
+    while ( percent_tmp < percent_in_ref_sec ) {
+        int npixels_tmp = 0;
+
+        // Count applicable pixels
         for ( size_t j = 0; j < gray_image.height(); j++ )
             for ( size_t i = 0; i < gray_image.width(); i++ )
-                if ( gray_image.pixel( i, j ) >= threshold_pixel_value_LR1 ) 
-                    counter++;
+                // if ( left_edge_pixel_value <= gray_image.pixel( i, j ) )
+                if ( left_edge_pixel_value <= gray_image.pixel( i, j ) && gray_image.pixel( i, j )<= right_edge_pixel_value )
+                    npixels_tmp++;
 
-        percent_tmp = float( counter ) / float( npixels_non_bgcolor_LR1 );
+        percent_tmp = float( npixels_tmp ) / float( npixels_non_bgcolor_LR1 );
         
-        // Next pixel value
-        threshold_pixel_value_LR1--;
+        // Expand the reference section
+        left_edge_pixel_value--;
     } // end while
-    threshold_pixel_value_LR1++;
+    left_edge_pixel_value++;
 
+    const kvs::UInt8 threshold_pixel_value = left_edge_pixel_value;
     std::cout   << "*** Threshold pixel value (LR=1)      : " 
-                << +threshold_pixel_value_LR1 << " (pixel value)" << std::endl;
+                << +threshold_pixel_value << " (pixel value)" << std::endl;
     std::cout   << "*** Percent in ref. section (LR=1)    : " 
                 << std::setprecision(3) << percent_tmp*100 << "(%) ( " 
-                << +threshold_pixel_value_LR1 << " ~ " << +max_pixel_value_LR1 << " (pixel value) )" << std::endl;
+                << +threshold_pixel_value << " ~ " << +right_edge_pixel_value << " (pixel value) )" << std::endl;
 
-    return threshold_pixel_value_LR1;
+    return threshold_pixel_value;
 } // End searchThresholdPixelValue()
 
-float BrightnessAdjustment::calcAdjustmentParameter( const kvs::ColorImage& color_image, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor )
+float BrightnessAdjustment::calcAdjustmentParameter( const kvs::ColorImage& color_image, const kvs::UInt8 threshold_pixel_value_LR1, const size_t npixels_non_bgcolor, const float percent_in_ref_sec )
 {
     float adjustment_parameter = 1.0f;
     float percent_tmp = 0.0f;
     
-    while ( percent_tmp < PERCENT_IN_REFERENCE_SECTION ) {
+    while ( percent_tmp < percent_in_ref_sec ) {
         // Update adjustment parameter
         adjustment_parameter += PARAMETER_INTERVAL;
 
         percent_tmp = calcTemporaryPercent(
-            /* kvs::ColorImage  */ color_image, 
-            /* const float      */ adjustment_parameter, 
-            /* const kvs::UInt8 */ threshold_pixel_value_LR1, 
-            /* const size_t     */ npixels_non_bgcolor );
+            color_image,                /* kvs::ColorImage  */ 
+            adjustment_parameter,       /* const float      */ 
+            threshold_pixel_value_LR1,  /* const kvs::UInt8 */ 
+            npixels_non_bgcolor         /* const size_t     */ 
+        );
     } // end while
     adjustment_parameter -= PARAMETER_INTERVAL;
 
@@ -359,13 +381,13 @@ float BrightnessAdjustment::calcTemporaryPercent( const kvs::ColorImage& color_i
     // Convert color to gray
     const kvs::GrayImage gray_image_tmp( color_image_tmp );
 
-    int counter = 0;
+    int npixels_tmp = 0;
     for ( size_t j = 0; j < gray_image_tmp.height(); j++ )
         for ( size_t i = 0; i < gray_image_tmp.width(); i++ )
             if ( gray_image_tmp.pixel( i, j ) >= threshold_pixel_value_LR1 ) 
-                counter++;
+                npixels_tmp++;
 
-    const float percent_tmp = float( counter ) / float( npixels_non_bgcolor );
+    const float percent_tmp = float( npixels_tmp ) / float( npixels_non_bgcolor );
     return percent_tmp;
 } // End calcTemporaryPercent()
 
@@ -430,16 +452,19 @@ float BrightnessAdjustment::calcFinalPercent( const kvs::ColorImage& color_image
     return percent_final;
 } // End calcFinalPercent()
 
-inline void BrightnessAdjustment::writeAdjustedImage( const std::string filename , const kvs::ColorImage& color_image, const float p_final ) const
+inline void BrightnessAdjustment::writeAdjustedImage( const std::string filename, const float p_final ) const
 {
     std::ostringstream oss;
     oss << p_final*100;
     std::string adjusted_image_filename( filename + "_adjusted" + oss.str() + ".bmp" );
-    color_image.write( adjusted_image_filename );
+    m_color_image.write( adjusted_image_filename );
 
-    std::cout << "\n*** The adjusted image is saved as a BITMAP file."   << std::endl;
-    std::cout << "    PATH: " << adjusted_image_filename << std::endl;
-    std::cout << "===========================================\n" << std::endl;
+    std::cout << std::endl;
+    std::cout << "*** The adjusted image is saved as a BITMAP file."            << std::endl;
+    std::cout << "    PATH: " << adjusted_image_filename                        << std::endl;
+    std::cout << std::endl;
+    std::cout << "============================================================" << std::endl;
+    std::cout << std::endl;
 
     // Exec. open command (macOS only)
 #ifdef OS_MAC
@@ -456,6 +481,9 @@ inline void BrightnessAdjustment::execOpenCommand( const std::string filename ) 
 
 void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string filename )
 {
+    // Save the original image
+    // m_color_image.write( filename + ".bmp" );
+
     // Display opening message
     displayMessage();
 
@@ -470,6 +498,14 @@ void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string file
     // Convert color to gray
     const kvs::GrayImage gray_image( m_color_image );
     const kvs::GrayImage gray_image_LR1( m_color_image_LR1 );
+
+    // Get max pixel value
+    const kvs::UInt8 max_pixel_value     = calcMaxPixelValue( gray_image );
+    const kvs::UInt8 max_pixel_value_LR1 = calcMaxPixelValue( gray_image_LR1 );
+    std::cout   << "*** Max pixel value                   : " 
+                << +max_pixel_value << " (pixel value)"     << std::endl;
+    std::cout   << "*** Max pixel value (LR=1)            : " 
+                << +max_pixel_value_LR1 << " (pixel value)" << std::endl;
 
     // =====================================================
     //  STEP1: Calculate threshold pixel value for division
@@ -487,61 +523,79 @@ void BrightnessAdjustment::AdjustBrightnessDivideVersion( const std::string file
 
     // Divide into high and low pixel value image
     divideIntoTwoImages( gray_image, th4division );
-    
-    // Save two images
-    m_color_image_high.write( filename + "_high_before.bmp" );
-    m_color_image_low.write( filename + "_low_before.bmp" );
 
-    const clock_t start = clock();
-    std::cout   << "\n*** Executing \"Brightness Adjustment\"..." << std::endl;
+    // Save high and low pixel value images
+    // m_color_image_high.write( filename + "_high_before.bmp" );
+    // m_color_image_low.write( filename + "_low_before.bmp" );
+
     // ========================================================
     //  STEP3: Adjust brightness of the high-pixel-value image
     // ========================================================
-    const kvs::UInt8 max_pixel_value     = calcMaxPixelValue( gray_image );
-    const kvs::UInt8 max_pixel_value_LR1 = calcMaxPixelValue( gray_image_LR1 );
-    std::cout   << "*** Max pixel value                   : " 
-                << +max_pixel_value << " (pixel value)"     << std::endl;
-    std::cout   << "*** Max pixel value (LR=1)            : " 
-                << +max_pixel_value_LR1 << " (pixel value)" << std::endl;
+    const clock_t start = clock();
 
+    std::cout   << "\n*** Executing \"Brightness Adjustment\" for high pixel value image..." << std::endl;
     const size_t npixels_non_bgcolor_LR1 = calcNumberOfPixelsNonBGColor( m_color_image_LR1 );
-    const kvs::UInt8 threshold_pixel_value_LR1_high = searchThresholdPixelValue( gray_image_LR1, npixels_non_bgcolor_LR1, max_pixel_value_LR1 );
+    const kvs::UInt8 threshold_pixel_value_LR1_high = searchThresholdPixelValue4LR1( 
+        gray_image_LR1, 
+        npixels_non_bgcolor_LR1, 
+        max_pixel_value_LR1,
+        PERCENT_IN_REFERENCE_SECTION_FOR_HIGH
+    );
 
-    float p_high = calcAdjustmentParameter( m_color_image_high, threshold_pixel_value_LR1_high, npixels_non_bgcolor );
+    const size_t npixels_non_bgcolor_high = calcNumberOfPixelsNonBGColor( m_color_image_high );
+    float p_high = calcAdjustmentParameter( 
+        m_color_image_high, 
+        threshold_pixel_value_LR1_high,
+        npixels_non_bgcolor_high,
+        PERCENT_IN_REFERENCE_SECTION_FOR_HIGH
+    );
     p_high = specifyNumberOfDigits( p_high, 4 );
-    execBrightnessAdjustment( m_color_image_high, p_high );
 
-    m_color_image_high.write( filename + "_high_after.bmp" );
+    execBrightnessAdjustment( m_color_image_high, p_high );
 
     // =======================================================
     //  STEP4: Adjust brightness of the low-pixel-value image
     // =======================================================
-    const kvs::UInt8 target_pixel_value = calcMeanPixelValue( m_color_image_high );
-    const kvs::UInt8 threshold_pixel_value_LR1_low = searchThresholdPixelValue( gray_image_LR1, npixels_non_bgcolor_LR1, target_pixel_value );
+    std::cout   << "\n*** Executing \"Brightness Adjustment\" for low pixel value image..." << std::endl;
+    const kvs::UInt8 mean_pixel_value_high = calcMeanPixelValue( m_color_image_high );
+    const kvs::UInt8 threshold_pixel_value_LR1_low = searchThresholdPixelValue4LR1( 
+        gray_image_LR1, 
+        npixels_non_bgcolor_LR1, 
+        mean_pixel_value_high,
+        PERCENT_IN_REFERENCE_SECTION_FOR_LOW
+    );
 
-    float p_low = calcAdjustmentParameter( m_color_image_low, threshold_pixel_value_LR1_low, npixels_non_bgcolor );
+    const size_t npixels_non_bgcolor_low = calcNumberOfPixelsNonBGColor( m_color_image_low );
+    float p_low = calcAdjustmentParameter( 
+        m_color_image_low, 
+        threshold_pixel_value_LR1_low, 
+        npixels_non_bgcolor_low,
+        PERCENT_IN_REFERENCE_SECTION_FOR_LOW
+    );
     p_low = specifyNumberOfDigits( p_low, 4 );
-    execBrightnessAdjustment( m_color_image_low, p_low );
 
-    m_color_image_low.write( filename + "_low_after.bmp" );
+    execBrightnessAdjustment( m_color_image_low, p_low );
 
     // =============================================================
     //  STEP5: Combine the adjusted high and low pixel value images
     // =============================================================
     combineTwoImages( m_color_image_high, m_color_image_low );
 
-
+    // =====
+    //  END
+    // =====
     const clock_t end = clock();
+    std::cout   << std::endl;
     std::cout   << "*** Done! ( " 
-                << static_cast<double>( end - start ) / CLOCKS_PER_SEC << " [sec] )\n" << std::endl;
-
+                << static_cast<double>( end - start ) / CLOCKS_PER_SEC << " [sec] )" << std::endl;
     std::cout   << "*** Adjustment parameter              : "
-                << "p_high: " << std::setprecision(3) << p_high << ", "
-                << "p_low: "  << std::setprecision(3) << p_low  << std::endl;
+                << "p_high = " << std::setprecision(3) << p_high << ", "
+                << "p_low = "  << std::setprecision(3) << p_low  << std::endl;
 
-    m_color_image.write( filename + "_final.bmp" );
+    // Write adjusted image
+    writeAdjustedImage( filename, p_high, p_low );
 
-} // End AdjustBrightness4Divide()
+} // End AdjustBrightnessDivideVersion()
 
 kvs::UInt8 BrightnessAdjustment::discriminantAnalysis( const kvs::GrayImage& gray_image ) const
 {
@@ -587,18 +641,35 @@ kvs::UInt8 BrightnessAdjustment::discriminantAnalysis( const kvs::GrayImage& gra
 } // End discriminantAnalysis()
 
 void BrightnessAdjustment::divideIntoTwoImages( const kvs::GrayImage& gray_image, const kvs::UInt8 threshold ) {
-    const kvs::RGBColor BGColor( 0, 0, 0 );
+    int npixels_high    = 0;
+    int npixels_low     = 0;
 
     for ( size_t j = 0; j < gray_image.height(); j++ ) {
         for ( size_t i = 0; i < gray_image.width(); i++ ) {
-            // Divide
-            if ( gray_image.pixel( i, j ) > threshold )
-                m_color_image_low.setPixel( i, j, BGColor );
-            else
-                m_color_image_high.setPixel( i, j, BGColor );
-            // end if
+
+            if ( gray_image.pixel( i, j ) > threshold ) {
+                m_color_image_low.setPixel( i, j, m_bgcolor );
+                npixels_high++;
+            
+            } else {
+
+                if ( gray_image.pixel( i, j ) != 0 ) {
+                    m_color_image_high.setPixel( i, j, m_bgcolor );
+                    npixels_low++;
+                }
+
+            } // end if
+        
         } // end for i
     } // end for j
+
+    const double npixels_non_bgcolor = npixels_high + npixels_low;
+    const int percentage_high = ( (double)npixels_high / npixels_non_bgcolor ) * 100.0f + 0.5f;
+    const int percentage_low  = ( (double)npixels_low  / npixels_non_bgcolor ) * 100.0f + 0.5f;
+    std::cout   << "*** Percentage of high pixel values   : " 
+                << std::setw(2) << percentage_high << " (%)" << std::endl;
+    std::cout   << "*** Percentage of low pixel values    : " 
+                << std::setw(2) << percentage_low  << " (%)" << std::endl;
 
 } // End divideIntoTwoImages()
 
@@ -634,3 +705,26 @@ void BrightnessAdjustment::combineTwoImages( const kvs::ColorImage& color_image_
         }
     }
 } // End combineTwoImages()
+
+inline void BrightnessAdjustment::writeAdjustedImage( const std::string filename, const float p_high, const float p_low ) const
+{
+    std::ostringstream oss;
+    oss << "-h";
+    oss << p_high*100;
+    oss << "-l";
+    oss << p_low*100;
+    std::string adjusted_image_filename( filename + "_adjusted" + oss.str() + ".bmp" );
+    m_color_image.write( adjusted_image_filename );
+
+    std::cout << std::endl;
+    std::cout << "*** The adjusted image is saved as a BITMAP file."            << std::endl;
+    std::cout << "    PATH: " << adjusted_image_filename                        << std::endl;
+    std::cout << std::endl;
+    std::cout << "==========================================================="  << std::endl;
+    std::cout << std::endl;
+
+    // Exec. open command (macOS only)
+#ifdef OS_MAC
+    execOpenCommand( adjusted_image_filename );
+#endif
+} // End writeAdjustedImages()
