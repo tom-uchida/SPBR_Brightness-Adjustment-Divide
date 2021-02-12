@@ -33,7 +33,7 @@
 
 #include <time.h>
 
-// #define DEVELOPPING
+// #define DEV
 
 const float PERCENT_IN_REFERENCE_SECTION            = 0.01f;
 const float PERCENT_IN_REFERENCE_SECTION_FOR_HIGH   = 0.01f;
@@ -608,7 +608,7 @@ kvs::UInt8 BrightnessAdjustment::discriminantAnalysis( const kvs::GrayImage& gra
     
     // Discriminant Analysis
     kvs::UInt8 threshold = 0;
-    double max = 0.0;  // max value of {w1 * w2 * (m1 - m2)^2}
+    double max = 0.0;  // max value of (w1 * w2 * (m1 - m2)^2)
     for ( size_t i = 0; i < 256; i++ ) {
         int w1 = 0;  
         int w2 = 0;
